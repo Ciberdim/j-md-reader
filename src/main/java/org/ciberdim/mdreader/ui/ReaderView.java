@@ -1,5 +1,6 @@
 package org.ciberdim.mdreader.ui;
 
+import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -13,6 +14,10 @@ import javafx.scene.web.WebView;
 import javafx.scene.input.ScrollEvent;
 import javafx.print.PrinterJob;
 import javafx.stage.Window;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
 
 /**
  * Handles the display area of the application. Integrates a WebView
@@ -20,6 +25,9 @@ import javafx.stage.Window;
  * dashboard when no document is active.
  */
 public class ReaderView extends StackPane {
+
+    private static final Logger logger = LoggerFactory.getLogger(ReaderView.class);
+    private static final double[] ZOOM_LEVELS = {0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 3.0};
 
     private final WebView webView;
     private final WebEngine webEngine;
@@ -39,9 +47,7 @@ public class ReaderView extends StackPane {
         placeholderPane.setAlignment(Pos.CENTER);
         placeholderPane.setPadding(new Insets(30));
         
-        // Beautiful logo/icon using SVG
-        SVGPath logo = new SVGPath();
-        logo.setContent("M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z");
+        SVGPath logo = IconFactory.createIcon(IconFactory.PATH_LOGO, null);
         logo.setScaleX(2.5);
         logo.setScaleY(2.5);
         logo.setStyle("-fx-fill: -color-text-muted;");
@@ -68,21 +74,16 @@ public class ReaderView extends StackPane {
         spinnerPane.setVisible(false);
 
         // 2. WebView Settings
-        // Ensure webview matches context backgrounds
         webView.setContextMenuEnabled(false);
 
-        // Zoom function via Ctrl + Mouse Wheel
+        // Zoom function via Ctrl + Mouse Wheel (using predefined steps)
         webView.addEventFilter(ScrollEvent.SCROLL, event -> {
             if (event.isControlDown()) {
                 double direction = event.getDeltaY();
                 if (direction != 0) {
                     double currentZoom = webView.getZoom();
-                    double zoomFactor = direction > 0 ? 1.1 : 0.9;
-                    double newZoom = currentZoom * zoomFactor;
-                    // Cap zoom between 0.5 (50%) and 3.0 (300%)
-                    if (newZoom >= 0.5 && newZoom <= 3.0) {
-                        webView.setZoom(newZoom);
-                    }
+                    double newZoom = getNearestZoomLevel(currentZoom, direction > 0);
+                    webView.setZoom(newZoom);
                 }
                 event.consume();
             }
@@ -101,9 +102,23 @@ public class ReaderView extends StackPane {
             }
         });
 
-        // Assemble: Stack WebView on bottom, placeholder and spinner on top
+        // Assemble
         this.getChildren().addAll(webView, placeholderPane, spinnerPane);
         showPlaceholder();
+    }
+
+    private double getNearestZoomLevel(double currentZoom, boolean zoomIn) {
+        if (zoomIn) {
+            for (double level : ZOOM_LEVELS) {
+                if (level > currentZoom + 0.01) return level;
+            }
+            return ZOOM_LEVELS[ZOOM_LEVELS.length - 1];
+        } else {
+            for (int i = ZOOM_LEVELS.length - 1; i >= 0; i--) {
+                if (ZOOM_LEVELS[i] < currentZoom - 0.01) return ZOOM_LEVELS[i];
+            }
+            return ZOOM_LEVELS[0];
+        }
     }
 
     /**
@@ -112,20 +127,24 @@ public class ReaderView extends StackPane {
      * @param htmlContent the fully-formed HTML string to render
      */
     public void showContent(String htmlContent) {
-        placeholderPane.setVisible(false);
-        webView.setVisible(false);
-        spinnerPane.setVisible(true);
-        webEngine.loadContent(htmlContent);
+        Platform.runLater(() -> {
+            placeholderPane.setVisible(false);
+            webView.setVisible(false);
+            spinnerPane.setVisible(true);
+            webEngine.loadContent(htmlContent);
+        });
     }
 
     /**
      * Clears the active document and displays the default welcome placeholder.
      */
     public void showPlaceholder() {
-        webView.setVisible(false);
-        spinnerPane.setVisible(false);
-        placeholderPane.setVisible(true);
-        webEngine.loadContent("about:blank");
+        Platform.runLater(() -> {
+            webView.setVisible(false);
+            spinnerPane.setVisible(false);
+            placeholderPane.setVisible(true);
+            webEngine.loadContent("about:blank");
+        });
     }
 
     /**
@@ -144,7 +163,7 @@ public class ReaderView extends StackPane {
                 "if (el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }"
             );
         } catch (Exception e) {
-            System.err.println("Failed to scroll to anchor: " + e.getMessage());
+            logger.error("Failed to scroll to anchor", e);
         }
     }
 

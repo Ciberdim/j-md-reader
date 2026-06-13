@@ -2,6 +2,7 @@ package org.ciberdim.mdreader.ui;
 
 import org.ciberdim.mdreader.model.HeadingInfo;
 import org.ciberdim.mdreader.model.RecentFilesManager;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -23,6 +24,8 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
 import javafx.stage.FileChooser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.Desktop;
 import java.io.File;
@@ -35,6 +38,7 @@ import java.util.function.Consumer;
  * the active document outline (Table of Contents), and control buttons.
  */
 public class SidebarView extends VBox {
+    private static final Logger logger = LoggerFactory.getLogger(SidebarView.class);
 
     private final RecentFilesManager recentFilesManager;
     private final ObservableList<File> recentFilesList;
@@ -128,23 +132,13 @@ public class SidebarView extends VBox {
         openFileButton.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(openFileButton, Priority.ALWAYS);
         
-        // Open File SVG Icon
-        SVGPath folderIcon = new SVGPath();
-        folderIcon.setContent("M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z");
-        folderIcon.setStyle("-fx-fill: white;");
-        openFileButton.setGraphic(folderIcon);
-
+        openFileButton.setGraphic(IconFactory.createIcon(IconFactory.PATH_FOLDER, null));
         openFileButton.setOnAction(e -> handleOpenFileChooser());
 
         themeToggleButton = new Button();
         themeToggleButton.getStyleClass().add("button-secondary");
         themeToggleButton.setPadding(new Insets(8, 10, 8, 10));
-        
-        // Sun SVG Icon
-        SVGPath sunIcon = new SVGPath();
-        sunIcon.setContent("M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-12.37c-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41zm-12.37 12.37c-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41z");
-        sunIcon.getStyleClass().add("icon-primary");
-        themeToggleButton.setGraphic(sunIcon);
+        themeToggleButton.setGraphic(IconFactory.createIcon(IconFactory.PATH_SUN, "icon-primary"));
         
         themeToggleButton.setOnAction(e -> {
             if (themeToggler != null) {
@@ -173,14 +167,14 @@ public class SidebarView extends VBox {
      * @param headings the new list of HeadingInfo headings
      */
     public void setOutline(List<HeadingInfo> headings) {
-        tocListView.getItems().setAll(headings);
+        Platform.runLater(() -> tocListView.getItems().setAll(headings));
     }
 
     /**
      * Refresh the recent files list view from the manager.
      */
     public void refreshRecentFiles() {
-        recentFilesList.setAll(recentFilesManager.getRecentFiles());
+        Platform.runLater(() -> recentFilesList.setAll(recentFilesManager.getRecentFiles()));
     }
 
     /**
@@ -189,41 +183,22 @@ public class SidebarView extends VBox {
      * @param isDark true if the current theme is dark, false for light
      */
     public void updateThemeIcon(boolean isDark) {
-        SVGPath icon = new SVGPath();
-        if (isDark) {
-            // Sun icon
-            icon.setContent("M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-12.37c-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41zm-12.37 12.37c-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41z");
-        } else {
-            // Moon icon
-            icon.setContent("M12.3 22h-.1c-5.5 0-10-4.5-10-10 0-4.7 3.2-8.7 7.7-9.7.6-.1 1.1.4 1 .9-.5 2.5.2 5.1 2 6.9 1.8 1.8 4.4 2.5 6.9 2 .5-.1 1 .4.9 1-.9 4.5-4.9 7.9-9.4 7.9z");
-        }
-        themeToggleButton.setGraphic(icon);
+        String path = isDark ? IconFactory.PATH_SUN : IconFactory.PATH_MOON;
+        themeToggleButton.setGraphic(IconFactory.createIcon(path, "icon-primary"));
     }
 
-    /**
-     * Registers a callback for opening a selected file.
-     */
     public void setOnFileOpener(Consumer<File> fileOpener) {
         this.fileOpener = fileOpener;
     }
 
-    /**
-     * Registers a callback for toggling the application theme.
-     */
     public void setOnThemeToggler(Runnable themeToggler) {
         this.themeToggler = themeToggler;
     }
 
-    /**
-     * Registers a callback for navigating to a Table of Contents heading anchor.
-     */
     public void setOnTocNavigator(Consumer<HeadingInfo> tocNavigator) {
         this.tocNavigator = tocNavigator;
     }
 
-    /**
-     * Launches the system FileChooser dialog to select a Markdown file.
-     */
     private void handleOpenFileChooser() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Open Markdown File");
@@ -237,9 +212,6 @@ public class SidebarView extends VBox {
         }
     }
 
-    /**
-     * Opens the currently selected recent file in the ListView.
-     */
     private void openSelectedRecentFile() {
         File file = recentListView.getSelectionModel().getSelectedItem();
         if (file != null && fileOpener != null) {
@@ -247,10 +219,6 @@ public class SidebarView extends VBox {
         }
     }
 
-    /**
-     * Custom ListCell to display files inside the recent files ListView.
-     * Displays the base file name in bold, and the folder path in a muted font.
-     */
     private class RecentFileCell extends ListCell<File> {
         private final VBox cellLayout;
         private final Label titleLabel;
@@ -284,7 +252,7 @@ public class SidebarView extends VBox {
                     try {
                         Desktop.getDesktop().open(file.getParentFile());
                     } catch (IOException ex) {
-                        System.err.println("Failed to open folder: " + ex.getMessage());
+                        logger.error("Failed to open folder in Explorer", ex);
                     }
                 }
             });
@@ -307,10 +275,6 @@ public class SidebarView extends VBox {
         }
     }
 
-    /**
-     * Custom ListCell to display headings inside the Table of Contents ListView.
-     * Adds custom padding/indentation and classes based on the heading level.
-     */
     private static class HeadingCell extends ListCell<HeadingInfo> {
         @Override
         protected void updateItem(HeadingInfo item, boolean empty) {
@@ -323,7 +287,6 @@ public class SidebarView extends VBox {
             } else {
                 setText(item.text());
                 
-                // Adjust styling based on depth level
                 switch (item.level()) {
                     case 1 -> getStyleClass().add("toc-cell-h1");
                     case 2 -> getStyleClass().add("toc-cell-h2");

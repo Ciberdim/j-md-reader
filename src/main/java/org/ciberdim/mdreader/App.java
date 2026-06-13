@@ -5,6 +5,8 @@ import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URL;
 
@@ -13,6 +15,7 @@ import java.net.URL;
  * styles, stage bindings, and launches the primary stage view.
  */
 public class App extends Application {
+    private static final Logger logger = LoggerFactory.getLogger(App.class);
 
     @Override
     public void start(Stage stage) {
@@ -25,7 +28,7 @@ public class App extends Application {
         if (cssResource != null) {
             scene.getStylesheets().add(cssResource.toExternalForm());
         } else {
-            System.err.println("Could not load styles.css. Check resources folder configuration.");
+            logger.error("Could not load styles.css. Check resources folder configuration.");
         }
 
         // Load application window icon
@@ -34,10 +37,10 @@ public class App extends Application {
             if (iconStream != null) {
                 stage.getIcons().add(new Image(iconStream));
             } else {
-                System.err.println("Application icon resource not found: /images/mark_text.png");
+                logger.error("Application icon resource not found: /images/mark_text.png");
             }
         } catch (Exception e) {
-            System.err.println("Could not load application icon: " + e.getMessage());
+            logger.error("Could not load application icon", e);
         }
 
         // Bind window title to open document name dynamically

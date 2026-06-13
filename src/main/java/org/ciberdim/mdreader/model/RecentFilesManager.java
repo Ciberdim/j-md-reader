@@ -1,11 +1,13 @@
 package org.ciberdim.mdreader.model;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,12 +16,13 @@ import java.util.List;
  * Handles persistence to a local file in the user's home directory.
  */
 public class RecentFilesManager {
+    private static final Logger logger = LoggerFactory.getLogger(RecentFilesManager.class);
     private static final String APP_DIR_NAME = ".j-md-reader";
     private static final String RECENT_FILES_FILE_NAME = "recent-files.txt";
     private static final int MAX_RECENT_FILES = 10;
 
     private final List<File> recentFiles = new ArrayList<>();
-    private final File storageFile;
+    private final Path storageFile;
 
     /**
      * Constructs a new RecentFilesManager and loads the history from disk.
@@ -30,7 +33,7 @@ public class RecentFilesManager {
         if (!appDir.exists()) {
             appDir.mkdirs();
         }
-        this.storageFile = new File(appDir, RECENT_FILES_FILE_NAME);
+        this.storageFile = new File(appDir, RECENT_FILES_FILE_NAME).toPath();
         load();
     }
 
@@ -86,14 +89,14 @@ public class RecentFilesManager {
      * Only adds files that still exist on the filesystem.
      */
     private void load() {
-        if (!storageFile.exists()) {
+        if (!Files.exists(storageFile)) {
             return;
         }
 
         recentFiles.clear();
-        try (BufferedReader reader = new BufferedReader(new FileReader(storageFile))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
+        try {
+            List<String> lines = Files.readAllLines(storageFile, StandardCharsets.UTF_8);
+            for (String line : lines) {
                 String trimmed = line.trim();
                 if (!trimmed.isEmpty()) {
                     File file = new File(trimmed);
@@ -103,7 +106,7 @@ public class RecentFilesManager {
                 }
             }
         } catch (IOException e) {
-            System.err.println("Failed to load recent files: " + e.getMessage());
+            logger.error("Failed to load recent files", e);
         }
     }
 
@@ -111,13 +114,14 @@ public class RecentFilesManager {
      * Saves the current list of recent files to the storage file on disk.
      */
     private void save() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(storageFile))) {
+        try {
+            List<String> lines = new ArrayList<>();
             for (File file : recentFiles) {
-                writer.write(file.getAbsolutePath());
-                writer.newLine();
+                lines.add(file.getAbsolutePath());
             }
+            Files.write(storageFile, lines, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            System.err.println("Failed to save recent files: " + e.getMessage());
+            logger.error("Failed to save recent files", e);
         }
     }
 }

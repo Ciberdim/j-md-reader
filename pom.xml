@@ -50,6 +50,11 @@
             <artifactId>commonmark-ext-gfm-strikethrough</artifactId>
             <version>${commonmark.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.commonmark</groupId>
+            <artifactId>commonmark-ext-heading-anchor</artifactId>
+            <version>${commonmark.version}</version>
+        </dependency>
 
         <!-- HTML to Markdown converter -->
         <dependency>
@@ -57,6 +62,18 @@
             <artifactId>flexmark-html2md-converter</artifactId>
             <version>0.64.8</version>
             <scope>compile</scope>
+        </dependency>
+
+        <!-- Logging -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.12</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.5.0</version>
         </dependency>
     </dependencies>
 

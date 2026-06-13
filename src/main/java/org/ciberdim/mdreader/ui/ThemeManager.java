@@ -6,7 +6,7 @@ import javafx.scene.web.WebView;
 /**
  * Manages the application-wide theme (Light vs Dark mode).
  * Coordinates theme changes between the JavaFX scene stylesheet
- * and the rendered HTML document inside the WebView.
+ * and the rendered HTML document inside the WebView using classList manipulation.
  */
 public class ThemeManager {
     private boolean darkMode = false;
@@ -52,7 +52,7 @@ public class ThemeManager {
 
     /**
      * Injects JavaScript into the WebView to update its classes and stylesheets
-     * to match the current active theme.
+     * to match the current active theme, without clearing existing generic classes.
      * 
      * @param webView the WebView to update
      */
@@ -61,16 +61,18 @@ public class ThemeManager {
             return;
         }
 
-        String bodyClass = darkMode ? "dark-theme" : "light-theme";
         String highlightCssUrl = darkMode 
             ? "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
             : "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css";
 
         try {
-            // Check if document is available
             Object bodyObj = webView.getEngine().executeScript("document.body");
             if (bodyObj != null) {
-                webView.getEngine().executeScript("document.body.className = '" + bodyClass + "';");
+                if (darkMode) {
+                    webView.getEngine().executeScript("document.body.classList.remove('light-theme'); document.body.classList.add('dark-theme');");
+                } else {
+                    webView.getEngine().executeScript("document.body.classList.remove('dark-theme'); document.body.classList.add('light-theme');");
+                }
                 webView.getEngine().executeScript(
                     "var link = document.getElementById('highlight-style');" +
                     "if (link) { link.setAttribute('href', '" + highlightCssUrl + "'); }"
