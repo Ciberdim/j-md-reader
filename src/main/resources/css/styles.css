@@ -1,0 +1,167 @@
+/* CSS Variables for Light Mode */
+.root {
+    -color-bg: #f8f9fa;
+    -color-sidebar-bg: #ffffff;
+    -color-sidebar-border: #e9ecef;
+    -color-text-main: #212529;
+    -color-text-muted: #6c757d;
+    -color-accent: #0d6efd;
+    -color-accent-hover: #0b5ed7;
+    -color-list-item-hover: #f8f9fa;
+    -color-list-item-selected: #e7f5ff;
+    -color-list-item-selected-text: #0d6efd;
+    -color-input-bg: #ffffff;
+    -color-input-border: #ced4da;
+    -color-scroll-track: #f1f3f5;
+    -color-scroll-thumb: #ced4da;
+    -color-scroll-thumb-hover: #adb5bd;
+}
+
+/* CSS Variables for Dark Mode */
+.dark-mode {
+    -color-bg: #0d1117;
+    -color-sidebar-bg: #161b22;
+    -color-sidebar-border: #30363d;
+    -color-text-main: #c9d1d9;
+    -color-text-muted: #8b949e;
+    -color-accent: #58a6ff;
+    -color-accent-hover: #1f6feb;
+    -color-list-item-hover: #21262d;
+    -color-list-item-selected: #1f6feb33;
+    -color-list-item-selected-text: #58a6ff;
+    -color-input-bg: #0d1117;
+    -color-input-border: #30363d;
+    -color-scroll-track: #161b22;
+    -color-scroll-thumb: #30363d;
+    -color-scroll-thumb-hover: #8b949e;
+}
+
+/* Base Panel Styling */
+.split-pane {
+    -fx-background-color: -color-bg;
+}
+
+.split-pane *.split-pane-divider {
+    -fx-background-color: -color-sidebar-border;
+    -fx-padding: 0 1 0 1;
+}
+
+.sidebar {
+    -fx-background-color: -color-sidebar-bg;
+    -fx-border-color: transparent -color-sidebar-border transparent transparent;
+    -fx-border-width: 0 1 0 0;
+}
+
+/* Text Fields */
+.text-field {
+    -fx-background-color: -color-input-bg;
+    -fx-text-fill: -color-text-main;
+    -fx-prompt-text-fill: -color-text-muted;
+    -fx-border-color: -color-input-border;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-padding: 6px 10px;
+    -fx-font-size: 13px;
+}
+.text-field:focused {
+    -fx-border-color: -color-accent;
+}
+
+/* List Views */
+.list-view {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -color-text-main;
+    -fx-padding: 8px 12px;
+    -fx-background-radius: 4px;
+}
+.list-cell:filled:hover {
+    -fx-background-color: -color-list-item-hover;
+    -fx-cursor: hand;
+}
+.list-cell:filled:selected {
+    -fx-background-color: -color-list-item-selected;
+    -fx-text-fill: -color-list-item-selected-text;
+    -fx-font-weight: bold;
+}
+
+/* Buttons */
+.button {
+    -fx-background-color: -color-accent;
+    -fx-text-fill: white;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px 16px;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+.button:hover {
+    -fx-background-color: -color-accent-hover;
+}
+
+.button-secondary {
+    -fx-background-color: transparent;
+    -fx-text-fill: -color-text-main;
+    -fx-border-color: -color-input-border;
+    -fx-border-radius: 6px;
+    -fx-border-width: 1px;
+}
+.button-secondary:hover {
+    -fx-background-color: -color-list-item-hover;
+}
+
+/* Scrollbars styling */
+.scroll-bar:vertical, .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+}
+.scroll-bar:vertical .track, .scroll-bar:horizontal .track {
+    -fx-background-color: transparent;
+}
+.scroll-bar:vertical .thumb, .scroll-bar:horizontal .thumb {
+    -fx-background-color: -color-scroll-thumb;
+    -fx-background-radius: 4px;
+}
+.scroll-bar:vertical .thumb:hover, .scroll-bar:horizontal .thumb:hover {
+    -fx-background-color: -color-scroll-thumb-hover;
+}
+.scroll-bar:vertical .increment-button, .scroll-bar:vertical .decrement-button,
+.scroll-bar:horizontal .increment-button, .scroll-bar:horizontal .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+.scroll-bar:vertical .increment-arrow, .scroll-bar:vertical .decrement-arrow,
+.scroll-bar:horizontal .increment-arrow, .scroll-bar:horizontal .decrement-arrow {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+/* Headings labels in sidebar */
+.sidebar-header {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-text-muted;
+    -fx-padding: 0 0 4px 8px;
+}
+
+/* Custom list cell layouts */
+.recent-cell-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -color-text-main;
+}
+.recent-cell-path {
+    -fx-font-size: 11px;
+    -fx-text-fill: -color-text-muted;
+}
+.list-cell:selected .recent-cell-title {
+    -fx-text-fill: -color-list-item-selected-text;
+}
+
+.toc-cell-h1 { -fx-padding: 6px 12px 6px 12px; -fx-font-size: 13px; }
+.toc-cell-h2 { -fx-padding: 6px 12px 6px 24px; -fx-font-size: 12.5px; }
+.toc-cell-h3 { -fx-padding: 6px 12px 6px 36px; -fx-font-size: 12px; -fx-text-fill: -color-text-muted; }
