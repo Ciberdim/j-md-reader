@@ -58,6 +58,17 @@ public class MarkdownParser {
      */
     public MarkdownDocument parse(File file) throws IOException {
         String rawContent = Files.readString(file.toPath());
+        return parseRaw(rawContent, file);
+    }
+
+    /**
+     * Parses the given raw Markdown string into a MarkdownDocument.
+     * 
+     * @param rawContent the raw markdown text
+     * @param file the associated file (may be null if unsaved)
+     * @return the parsed MarkdownDocument
+     */
+    public MarkdownDocument parseRaw(String rawContent, File file) {
         Node documentNode = parser.parse(rawContent);
 
         // First pass: extract headings and generate unique IDs

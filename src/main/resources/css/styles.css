@@ -165,3 +165,22 @@
 .toc-cell-h1 { -fx-padding: 6px 12px 6px 12px; -fx-font-size: 13px; }
 .toc-cell-h2 { -fx-padding: 6px 12px 6px 24px; -fx-font-size: 12.5px; }
 .toc-cell-h3 { -fx-padding: 6px 12px 6px 36px; -fx-font-size: 12px; -fx-text-fill: -color-text-muted; }
+
+/* Text Area (LLM Export Modal) */
+.text-area {
+    -fx-background-color: -color-input-bg;
+    -fx-text-fill: -color-text-main;
+    -fx-border-color: -color-input-border;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-padding: 2px;
+}
+.text-area .content {
+    -fx-background-color: -color-input-bg;
+}
+.text-area:focused .content {
+    -fx-background-color: -color-input-bg;
+}
+.text-area .viewport {
+    -fx-background-color: transparent;
+}

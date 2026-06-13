@@ -30,11 +30,11 @@ public class App extends Application {
 
         // Load application window icon
         try {
-            java.io.InputStream iconStream = getClass().getResourceAsStream("/images/markdown.png");
+            java.io.InputStream iconStream = getClass().getResourceAsStream("/images/mark_text.png");
             if (iconStream != null) {
                 stage.getIcons().add(new Image(iconStream));
             } else {
-                System.err.println("Application icon resource not found: /images/markdown.png");
+                System.err.println("Application icon resource not found: /images/mark_text.png");
             }
         } catch (Exception e) {
             System.err.println("Could not load application icon: " + e.getMessage());

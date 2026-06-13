@@ -4,11 +4,15 @@ import javafx.concurrent.Worker;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import javafx.scene.input.ScrollEvent;
+import javafx.print.PrinterJob;
+import javafx.stage.Window;
 
 /**
  * Handles the display area of the application. Integrates a WebView
@@ -20,6 +24,7 @@ public class ReaderView extends StackPane {
     private final WebView webView;
     private final WebEngine webEngine;
     private final VBox placeholderPane;
+    private final VBox spinnerPane;
     private Runnable onLoadSucceeded;
 
     /**
@@ -50,21 +55,54 @@ public class ReaderView extends StackPane {
 
         placeholderPane.getChildren().addAll(logo, titleLabel, descLabel);
 
+        // 1.5. Spinner Pane
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        progressIndicator.setMaxSize(50, 50);
+
+        Label loadingLabel = new Label("Loading document...");
+        loadingLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: -color-text-muted;");
+
+        spinnerPane = new VBox(12, progressIndicator, loadingLabel);
+        spinnerPane.setAlignment(Pos.CENTER);
+        spinnerPane.setPadding(new Insets(30));
+        spinnerPane.setVisible(false);
+
         // 2. WebView Settings
         // Ensure webview matches context backgrounds
         webView.setContextMenuEnabled(false);
 
-        // Notify when loading completes
-        webEngine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
-            if (newState == Worker.State.SUCCEEDED) {
-                if (onLoadSucceeded != null) {
-                    onLoadSucceeded.run();
+        // Zoom function via Ctrl + Mouse Wheel
+        webView.addEventFilter(ScrollEvent.SCROLL, event -> {
+            if (event.isControlDown()) {
+                double direction = event.getDeltaY();
+                if (direction != 0) {
+                    double currentZoom = webView.getZoom();
+                    double zoomFactor = direction > 0 ? 1.1 : 0.9;
+                    double newZoom = currentZoom * zoomFactor;
+                    // Cap zoom between 0.5 (50%) and 3.0 (300%)
+                    if (newZoom >= 0.5 && newZoom <= 3.0) {
+                        webView.setZoom(newZoom);
+                    }
                 }
+                event.consume();
             }
         });
 
-        // Assemble: Stack WebView on bottom, placeholder on top
-        this.getChildren().addAll(webView, placeholderPane);
+        // Notify when loading completes
+        webEngine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
+            if (newState == Worker.State.SUCCEEDED) {
+                spinnerPane.setVisible(false);
+                webView.setVisible(true);
+                if (onLoadSucceeded != null) {
+                    onLoadSucceeded.run();
+                }
+            } else if (newState == Worker.State.FAILED || newState == Worker.State.CANCELLED) {
+                spinnerPane.setVisible(false);
+            }
+        });
+
+        // Assemble: Stack WebView on bottom, placeholder and spinner on top
+        this.getChildren().addAll(webView, placeholderPane, spinnerPane);
         showPlaceholder();
     }
 
@@ -75,7 +113,8 @@ public class ReaderView extends StackPane {
      */
     public void showContent(String htmlContent) {
         placeholderPane.setVisible(false);
-        webView.setVisible(true);
+        webView.setVisible(false);
+        spinnerPane.setVisible(true);
         webEngine.loadContent(htmlContent);
     }
 
@@ -84,6 +123,7 @@ public class ReaderView extends StackPane {
      */
     public void showPlaceholder() {
         webView.setVisible(false);
+        spinnerPane.setVisible(false);
         placeholderPane.setVisible(true);
         webEngine.loadContent("about:blank");
     }
@@ -124,5 +164,20 @@ public class ReaderView extends StackPane {
      */
     public WebView getWebView() {
         return webView;
+    }
+
+    /**
+     * Prints the current document loaded in the WebView using the system printing dialog.
+     * 
+     * @param owner the owner window of the print dialog
+     */
+    public void print(Window owner) {
+        PrinterJob job = PrinterJob.createPrinterJob();
+        if (job != null) {
+            if (job.showPrintDialog(owner)) {
+                webEngine.print(job);
+                job.endJob();
+            }
+        }
     }
 }
