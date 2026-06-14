@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Reader</title>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #24292e;
+            --border-color: #d0d7de;
+            --link-color: #0969da;
+            --code-bg: #f6f8fa;
+            --quote-bg: #f6f8fa;
+            --quote-border: #d0d7de;
+            --table-zebra: #f6f8fa;
+        }
+        
+        body.dark-theme {
+            --bg-color: #0d1117;
+            --text-color: #c9d1d9;
+            --border-color: #30363d;
+            --link-color: #58a6ff;
+            --code-bg: #161b22;
+            --quote-bg: #161b22;
+            --quote-border: #30363d;
+            --table-zebra: #161b22;
+        }
+
+        body {
+            margin: 0;
+            padding: 40px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+            word-wrap: break-word;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .markdown-body {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            margin-top: 24px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+
+        h1 { font-size: 2em; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
+        h2 { font-size: 1.5em; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
+        h3 { font-size: 1.25em; }
+        h4 { font-size: 1em; }
+
+        p {
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+
+        a {
+            color: var(--link-color);
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+
+        ul, ol {
+            margin-top: 0;
+            margin-bottom: 16px;
+            padding-left: 2em;
+        }
+
+        li {
+            margin-top: 0.25em;
+        }
+
+        code {
+            padding: 0.2em 0.4em;
+            margin: 0;
+            font-size: 85%;
+            background-color: var(--code-bg);
+            border-radius: 6px;
+            font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+        }
+
+        pre {
+            padding: 16px;
+            overflow: auto;
+            font-size: 85%;
+            line-height: 1.45;
+            background-color: var(--code-bg);
+            border-radius: 6px;
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+
+        pre code {
+            padding: 0;
+            margin: 0;
+            font-size: 100%;
+            background-color: transparent;
+            border-radius: 0;
+            word-break: normal;
+            white-space: pre;
+        }
+
+        blockquote {
+            padding: 0 1em;
+            color: #57606a;
+            border-left: 0.25em solid var(--quote-border);
+            background-color: var(--quote-bg);
+            margin: 0 0 16px 0;
+        }
+        
+        body.dark-theme blockquote {
+            color: #8b949e;
+        }
+
+        table {
+            display: block;
+            width: 100%;
+            width: max-content;
+            max-width: 100%;
+            overflow: auto;
+            margin-top: 0;
+            margin-bottom: 16px;
+            border-spacing: 0;
+            border-collapse: collapse;
+        }
+
+        table th, table td {
+            padding: 6px 13px;
+            border: 1px solid var(--border-color);
+        }
+
+        table tr {
+            background-color: var(--bg-color);
+            border-top: 1px solid var(--border-color);
+        }
+
+        table tr:nth-child(even) {
+            background-color: var(--table-zebra);
+        }
+
+        img {
+            max-width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 16px;
+        }
+
+        hr {
+            height: 0.25em;
+            padding: 0;
+            margin: 24px 0;
+            background-color: var(--border-color);
+            border: 0;
+        }
+
+        /* Mermaid Diagram Styling */
+        .mermaid {
+            background: white !important;
+            color: black !important;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #d0d7de;
+            margin: 15px 0;
+            display: inline-block;
+            text-align: center;
+        }
+
+        mark.search-match {
+            background-color: #ffd166;
+            color: #000;
+            border-radius: 2px;
+        }
+        mark.search-match-active {
+            background-color: #f77f00;
+            color: #fff;
+            box-shadow: 0 0 3px rgba(0,0,0,0.5);
+        }
+    </style>
+    <!-- Highlight.js syntax highlighting -->
+    <link id="highlight-style" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    
+    <!-- Mermaid.js for diagrams -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body class="light-theme">
+    <div class="markdown-body">
+        %s
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Find all <code class="language-mermaid"> or <code class="language-sequence"> blocks
+            const codeBlocks = document.querySelectorAll("pre code");
+            codeBlocks.forEach(block => {
+                const isMermaid = block.classList.contains("language-mermaid");
+                const isSequence = block.classList.contains("language-sequence");
+                if (isMermaid || isSequence) {
+                    const pre = block.parentElement;
+                    const div = document.createElement("div");
+                    div.className = "mermaid";
+                    let content = block.textContent.trim();
+                    if (isSequence && !content.startsWith("sequenceDiagram")) {
+                        content = "sequenceDiagram\n" + content;
+                    }
+                    div.textContent = content;
+                    pre.replaceWith(div);
+                }
+            });
+
+            // Initialize Mermaid
+            mermaid.initialize({
+                startOnLoad: true,
+                theme: 'default',
+                securityLevel: 'loose'
+            });
+
+            // Perform code highlighting
+            hljs.highlightAll();
+
+            // Speed up mouse wheel scrolling in JavaFX WebView (default is too slow)
+            window.addEventListener('wheel', function(event) {
+                let container = event.target;
+                let hasScrollableParent = false;
+                while (container && container !== document.body && container !== document.documentElement) {
+                    const style = window.getComputedStyle(container);
+                    const isScrollableY = (style.overflowY === 'auto' || style.overflowY === 'scroll') 
+                        && container.scrollHeight > container.clientHeight;
+                    const isScrollableX = (style.overflowX === 'auto' || style.overflowX === 'scroll') 
+                        && container.scrollWidth > container.clientWidth;
+                    
+                    if (isScrollableY || isScrollableX) {
+                        hasScrollableParent = true;
+                        break;
+                    }
+                    container = container.parentElement;
+                }
+
+                if (!hasScrollableParent) {
+                    event.preventDefault();
+                    const multiplier = 2.5; // Custom scroll speed multiplier
+                    window.scrollBy({
+                        top: event.deltaY * multiplier,
+                        left: event.deltaX * multiplier,
+                        behavior: 'auto'
+                    });
+                }
+            }, { passive: false });
+        });
+
+        let searchMatches = [];
+        let activeMatchIndex = -1;
+
+        function searchAndHighlight(text) {
+            clearSearchHighlights();
+            if (!text) return 0;
+
+            const body = document.querySelector('.markdown-body');
+            if (!body) return 0;
+
+            function findTextNodes(node) {
+                let textNodes = [];
+                if (node.nodeType === Node.TEXT_NODE) {
+                    textNodes.push(node);
+                } else {
+                    if (node.nodeName !== 'SCRIPT' && node.nodeName !== 'STYLE' && node.nodeName !== 'MARK') {
+                        for (let child of node.childNodes) {
+                            textNodes = textNodes.concat(findTextNodes(child));
+                        }
+                    }
+                }
+                return textNodes;
+            }
+
+            const nodes = findTextNodes(body);
+            const regex = new RegExp("(" + escapeRegExp(text) + ")", "gi");
+
+            nodes.forEach(node => {
+                const parent = node.parentNode;
+                if (!parent) return;
+
+                const matches = node.nodeValue.match(regex);
+                if (matches) {
+                    const fragment = document.createDocumentFragment();
+                    let lastIndex = 0;
+                    node.nodeValue.replace(regex, (match, p1, index) => {
+                        fragment.appendChild(document.createTextNode(node.nodeValue.substring(lastIndex, index)));
+                        
+                        const mark = document.createElement('mark');
+                        mark.className = 'search-match';
+                        mark.textContent = match;
+                        fragment.appendChild(mark);
+                        
+                        searchMatches.push(mark);
+                        lastIndex = index + match.length;
+                    });
+                    fragment.appendChild(document.createTextNode(node.nodeValue.substring(lastIndex)));
+                    parent.replaceChild(fragment, node);
+                }
+            });
+
+            if (searchMatches.length > 0) {
+                activeMatchIndex = 0;
+                highlightActiveMatch();
+            }
+            return searchMatches.length;
+        }
+
+        function clearSearchHighlights() {
+            const marks = document.querySelectorAll('mark.search-match');
+            marks.forEach(mark => {
+                const parent = mark.parentNode;
+                if (parent) {
+                    const textNode = document.createTextNode(mark.textContent);
+                    parent.replaceChild(textNode, mark);
+                    parent.normalize();
+                }
+            });
+            searchMatches = [];
+            activeMatchIndex = -1;
+        }
+
+        function highlightActiveMatch() {
+            const activeMarks = document.querySelectorAll('mark.search-match-active');
+            activeMarks.forEach(m => m.classList.remove('search-match-active'));
+
+            if (activeMatchIndex >= 0 && activeMatchIndex < searchMatches.length) {
+                const activeMark = searchMatches[activeMatchIndex];
+                activeMark.classList.add('search-match-active');
+                activeMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function nextSearchMatch() {
+            if (searchMatches.length === 0) return -1;
+            activeMatchIndex = (activeMatchIndex + 1) % searchMatches.length;
+            highlightActiveMatch();
+            return activeMatchIndex;
+        }
+
+        function prevSearchMatch() {
+            if (searchMatches.length === 0) return -1;
+            activeMatchIndex = (activeMatchIndex - 1 + searchMatches.length) % searchMatches.length;
+            highlightActiveMatch();
+            return activeMatchIndex;
+        }
+
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+    </script>
+</body>
+</html>
