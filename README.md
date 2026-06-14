@@ -2,14 +2,14 @@
 
 A fast, beautiful, and distraction-free Markdown reader and editor for Windows, built natively with **Java 21** and **JavaFX**.
 
-Markdown Reader was designed to provide a focused environment with deep operating system integration and a modern UI that adapts to your workflow.
+Markdown Reader was designed to provide a clean environment to read md files.
 
 ## Features
 
-* **Real-Time Background Rendering**: Smooth, non-blocking real-time rendering. When "Real Time" mode is enabled, the editor automatically updates the preview after 4 seconds of typing idle time—with zero screen flashing.
-* **Native Windows Integration**: Built-in support for command-line file loading. The application natively supports opening `.md` files via command-line arguments.
-* **Elegant Themes**: Full support for both beautiful Light and sleek Dark modes.
-* **Smart Navigation**: A dedicated sidebar keeps track of your recently opened files and dynamically generates a Table of Contents for rapid navigation across large documents.
+* **Real-Time Background Rendering**: Smooth, non-blocking real-time rendering. 
+* **Native Windows Integration**: The application natively supports opening `.md` files via command-line arguments.
+* **Elegant Themes**: Full support for both Light and sleek Dark modes.
+* **Smart Navigation**: A dedicated sidebar keeps track of your recently opened files and dynamically generates a Table of Contents 
 * **Format Conversion**: Easily import existing HTML documents for editing, or export your rendered Markdown directly to an HTML file for web distribution.
 
 ## Prerequisites
