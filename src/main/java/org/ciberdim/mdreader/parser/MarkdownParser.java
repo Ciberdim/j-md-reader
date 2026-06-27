@@ -14,8 +14,13 @@ import org.commonmark.node.Node;
 import org.commonmark.node.Text;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
+import org.commonmark.parser.IncludeSourceSpans;
+import org.commonmark.renderer.html.AttributeProvider;
+import org.commonmark.renderer.html.AttributeProviderContext;
+import org.commonmark.renderer.html.AttributeProviderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.Map;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,10 +54,25 @@ public class MarkdownParser {
 
         this.parser = Parser.builder()
             .extensions(extensions)
+            .includeSourceSpans(IncludeSourceSpans.BLOCKS_AND_INLINES)
             .build();
 
         this.htmlRenderer = HtmlRenderer.builder()
             .extensions(extensions)
+            .attributeProviderFactory(new AttributeProviderFactory() {
+                @Override
+                public AttributeProvider create(AttributeProviderContext context) {
+                    return new AttributeProvider() {
+                        @Override
+                        public void setAttributes(Node node, String tagName, Map<String, String> attributes) {
+                            if (node.getSourceSpans() != null && !node.getSourceSpans().isEmpty()) {
+                                // getLineIndex is 0-based, we want 1-based to match MainWindow loop
+                                attributes.put("data-source-line", String.valueOf(node.getSourceSpans().get(0).getLineIndex() + 1));
+                            }
+                        }
+                    };
+                }
+            })
             .build();
             
         loadTemplate();

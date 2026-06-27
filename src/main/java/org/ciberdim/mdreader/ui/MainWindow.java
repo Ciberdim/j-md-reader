@@ -216,6 +216,7 @@ public class MainWindow extends BorderPane {
         Label realTimeLabel = new Label("Real Time");
         realTimeLabel.setStyle("-fx-text-fill: -color-text-main;");
         ToggleSwitch realTimeToggle = new ToggleSwitch();
+        realTimeToggle.setSelected(true);
         HBox toggleContainer = new HBox(8, realTimeLabel, realTimeToggle);
         toggleContainer.setAlignment(Pos.CENTER);
         
@@ -226,8 +227,93 @@ public class MainWindow extends BorderPane {
         HBox header = new HBox(10, titleLabel, spacer, toggleContainer, resetButton, renderButton, copyButton);
         header.setAlignment(Pos.CENTER_LEFT);
 
+        // Search Bar setup
+        TextField searchField = new TextField();
+        searchField.setPromptText("Find in code...");
+        searchField.setPrefWidth(200);
+
+        Label matchCountLabel = new Label("0 / 0");
+        matchCountLabel.setMinWidth(45);
+        matchCountLabel.setAlignment(Pos.CENTER);
+
+        Button prevButton = new Button();
+        prevButton.getStyleClass().add("button-secondary");
+        prevButton.setGraphic(IconFactory.createIcon(IconFactory.PATH_UP, "icon-primary"));
+        prevButton.setTooltip(new Tooltip("Previous Match (Shift+Enter)"));
+
+        Button nextButton = new Button();
+        nextButton.getStyleClass().add("button-secondary");
+        nextButton.setGraphic(IconFactory.createIcon(IconFactory.PATH_DOWN, "icon-primary"));
+        nextButton.setTooltip(new Tooltip("Next Match (Enter)"));
+
+        HBox searchBar = new HBox(8, searchField, matchCountLabel, prevButton, nextButton);
+        searchBar.setAlignment(Pos.CENTER_LEFT);
+        searchBar.setPadding(new Insets(5, 0, 5, 0));
+
         TextArea textArea = new TextArea(activeDocument.getRawContent());
         
+        java.util.List<Integer> matchIndices = new java.util.ArrayList<>();
+        int[] currentMatch = {0};
+
+        Runnable updateSearch = () -> {
+            String query = searchField.getText();
+            String content = textArea.getText();
+            matchIndices.clear();
+            if (query != null && !query.isEmpty()) {
+                String lowerContent = content.toLowerCase();
+                String lowerQuery = query.toLowerCase();
+                int idx = lowerContent.indexOf(lowerQuery);
+                while (idx >= 0) {
+                    matchIndices.add(idx);
+                    idx = lowerContent.indexOf(lowerQuery, idx + 1);
+                }
+            }
+            if (matchIndices.isEmpty()) {
+                currentMatch[0] = 0;
+                matchCountLabel.setText("0 / 0");
+            } else {
+                currentMatch[0] = 1;
+                matchCountLabel.setText("1 / " + matchIndices.size());
+                textArea.selectRange(matchIndices.get(0), matchIndices.get(0) + query.length());
+            }
+        };
+
+        searchField.textProperty().addListener((obs, oldVal, newVal) -> updateSearch.run());
+
+        Runnable nextMatch = () -> {
+            if (!matchIndices.isEmpty()) {
+                currentMatch[0]++;
+                if (currentMatch[0] > matchIndices.size()) currentMatch[0] = 1;
+                matchCountLabel.setText(currentMatch[0] + " / " + matchIndices.size());
+                int start = matchIndices.get(currentMatch[0] - 1);
+                textArea.selectRange(start, start + searchField.getText().length());
+            }
+        };
+
+        Runnable prevMatch = () -> {
+            if (!matchIndices.isEmpty()) {
+                currentMatch[0]--;
+                if (currentMatch[0] < 1) currentMatch[0] = matchIndices.size();
+                matchCountLabel.setText(currentMatch[0] + " / " + matchIndices.size());
+                int start = matchIndices.get(currentMatch[0] - 1);
+                textArea.selectRange(start, start + searchField.getText().length());
+            }
+        };
+
+        nextButton.setOnAction(e -> nextMatch.run());
+        prevButton.setOnAction(e -> prevMatch.run());
+
+        searchField.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            if (event.getCode() == KeyCode.ENTER) {
+                if (event.isShiftDown()) {
+                    prevMatch.run();
+                } else {
+                    nextMatch.run();
+                }
+                event.consume();
+            }
+        });
+
         renderPause.setOnFinished(e -> workspaceController.updateDocumentContent(textArea.getText(), null, this::showErrorAlertFromBackground));
         
         realTimeToggle.selectedProperty().addListener((obs, oldVal, newVal) -> {
@@ -258,7 +344,7 @@ public class MainWindow extends BorderPane {
         HBox footer = new HBox(closeButton);
         footer.setAlignment(Pos.CENTER_RIGHT);
 
-        VBox layout = new VBox(15, header, textArea, footer);
+        VBox layout = new VBox(15, header, searchBar, textArea, footer);
         layout.setPadding(new Insets(15));
         layout.getStyleClass().add("root");
         if (themeManager.isDarkMode()) {
@@ -271,12 +357,55 @@ public class MainWindow extends BorderPane {
             scene.getStylesheets().add(cssResource.toExternalForm());
         }
         scene.getAccelerators().put(KeyCombination.keyCombination("Shortcut+W"), modalStage::close);
+        scene.getAccelerators().put(KeyCombination.keyCombination("Shortcut+F"), searchField::requestFocus);
 
         modalStage.setScene(scene);
         modalStage.setMinWidth(600);
         modalStage.setMinHeight(450);
         modalStage.setOnHidden(e -> this.editStage = null);
         modalStage.show();
+
+        // Calculate and scroll to cursor position
+        int targetLine = 0;
+        try {
+            Object result = readerView.getWebView().getEngine().executeScript(
+                "(function() {" +
+                "  var elements = document.querySelectorAll('[data-source-line]');" +
+                "  for (var i = 0; i < elements.length; i++) {" +
+                "    var rect = elements[i].getBoundingClientRect();" +
+                "    if (rect.top >= 0 && rect.bottom <= window.innerHeight) {" +
+                "      return parseInt(elements[i].getAttribute('data-source-line'));" +
+                "    }" +
+                "  }" +
+                "  return 0;" +
+                "})();"
+            );
+            if (result instanceof Number) {
+                targetLine = ((Number) result).intValue();
+            }
+        } catch (Exception e) {
+            // Ignore if script fails
+        }
+        
+        if (targetLine > 0) {
+            String content = textArea.getText();
+            int currentLine = 1;
+            int caretPos = 0;
+            for (int i = 0; i < content.length(); i++) {
+                if (currentLine == targetLine) {
+                    caretPos = i;
+                    break;
+                }
+                if (content.charAt(i) == '\n') {
+                    currentLine++;
+                }
+            }
+            final int finalCaretPos = caretPos;
+            Platform.runLater(() -> {
+                textArea.positionCaret(finalCaretPos);
+                textArea.selectRange(finalCaretPos, finalCaretPos);
+            });
+        }
     }
 
     private void toggleTheme() {

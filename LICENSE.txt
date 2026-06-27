@@ -1,0 +1,15 @@
+MARKDOWN READER FREEWARE LICENSE
+
+Copyright (c) 2026 Ciberdim. All rights reserved.
+
+This software ("Markdown Reader") is provided as "Freeware". You are free to download, install, and use this software for personal or commercial purposes without any charge. 
+
+You may freely distribute the unmodified installation package or source code of this software, provided that this license agreement is included.
+
+DISCLAIMER OF WARRANTY:
+This software is provided "as is", without any warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and non-infringement. In no event shall the author or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.
+
+THIRD-PARTY COMPONENTS:
+This software utilizes several open-source libraries and frameworks to function. The "Freeware" designation of this license applies solely to the original code written for Markdown Reader. 
+
+All third-party dependencies and bundled environments remain subject to their respective open-source licenses (e.g., GPL v2 with Classpath Exception, BSD, MIT, EPL/LGPL). For a complete list of third-party dependencies, their authors, and their specific licensing terms, please refer to the "THIRD-PARTY-LICENSES.txt" file included with this software.
